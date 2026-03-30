@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: rag-api
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn rag_api:app --host 0.0.0.0 --port $PORT
+    autoDeploy: true
+
+  - type: web
+    name: rag-ui
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: streamlit run ui.py --server.port $PORT --server.address 0.0.0.0 --server.headless true
+    autoDeploy: true
+    envVars:
+      - key: API_URL
+        value: https://rag-api.onrender.com

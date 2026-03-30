@@ -1,6 +1,7 @@
 import streamlit as st
 import requests
 import json
+import os
 
 st.set_page_config(page_title="RAG Chatbot", page_icon="🤖", layout="wide")
 
@@ -10,7 +11,7 @@ st.markdown("Ask questions about your documents - answers come with citations!")
 # Sidebar for settings
 with st.sidebar:
     st.header("⚙️ Settings")
-    api_url = st.text_input("API URL", value="http://localhost:8000")
+    api_url = st.text_input("API URL", value=os.getenv("API_URL", "http://localhost:8000"))
     k_documents = st.slider("Number of documents to retrieve", 1, 10, 3)
 
     st.header("📤 Add Document")
