@@ -5,9 +5,32 @@ from pathlib import Path
 # LangChain components
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import PyPDFLoader, TextLoader
-from langchain_community.embeddings import HuggingFaceEmbeddings, FakeEmbeddings
+try:
+    from langchain_community.embeddings import HuggingFaceEmbeddings, FakeEmbeddings
+except Exception:
+    from langchain_community.embeddings import HuggingFaceEmbeddings
+    FakeEmbeddings = None
 from langchain_community.vectorstores import Chroma
 from langchain_core.documents import Document
+
+import hashlib
+
+
+class SimpleFakeEmbeddings:
+    def __init__(self, size: int = 384):
+        self.size = size
+
+    def _hash_to_vector(self, text: str) -> List[float]:
+        digest = hashlib.sha256(text.encode("utf-8")).digest()
+        values = list(digest)
+        vector = [float(values[i % len(values)]) / 255.0 for i in range(self.size)]
+        return vector
+
+    def embed_documents(self, texts: List[str]) -> List[List[float]]:
+        return [self._hash_to_vector(text) for text in texts]
+
+    def embed_query(self, text: str) -> List[float]:
+        return self._hash_to_vector(text)
 
 class LocalRAG:
     """RAG system using local models - no API keys needed."""
@@ -17,7 +40,10 @@ class LocalRAG:
         
         embeddings_backend = os.getenv("EMBEDDINGS_BACKEND", "hf")
         if embeddings_backend == "fake":
-            self.embeddings = FakeEmbeddings(size=384)
+            if FakeEmbeddings:
+                self.embeddings = FakeEmbeddings(size=384)
+            else:
+                self.embeddings = SimpleFakeEmbeddings(size=384)
             print("✓ Using fake embeddings (hosted demo)")
         else:
             try:
@@ -32,7 +58,10 @@ class LocalRAG:
             except Exception as e:
                 print(f"Embedding model unavailable: {e}")
                 print("Falling back to fake embeddings. Set EMBEDDINGS_BACKEND=fake to silence this.")
-                self.embeddings = FakeEmbeddings(size=384)
+                if FakeEmbeddings:
+                    self.embeddings = FakeEmbeddings(size=384)
+                else:
+                    self.embeddings = SimpleFakeEmbeddings(size=384)
         
         # Initialize vector store
         self.vectorstore = None

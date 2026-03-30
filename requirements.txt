@@ -9,4 +9,3 @@ langchain-openai
 langchain-text-splitters
 pypdf
 chromadb
-pypdf
