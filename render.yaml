@@ -11,6 +11,8 @@ services:
         value: mock
       - key: RAG_LAZY_INIT
         value: "1"
+      - key: EMBEDDINGS_BACKEND
+        value: fake
 
   - type: web
     name: rag-ui

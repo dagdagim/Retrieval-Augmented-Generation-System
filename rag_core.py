@@ -5,7 +5,7 @@ from pathlib import Path
 # LangChain components
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import PyPDFLoader, TextLoader
-from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_community.embeddings import HuggingFaceEmbeddings, FakeEmbeddings
 from langchain_community.vectorstores import Chroma
 from langchain_core.documents import Document
 
@@ -15,14 +15,24 @@ class LocalRAG:
     def __init__(self, persist_directory: str = "./chroma_db"):
         self.persist_directory = persist_directory
         
-        # Using sentence-transformers (runs locally, free, fast)
-        print("Loading embedding model (first time downloads ~400MB)...")
-        self.embeddings = HuggingFaceEmbeddings(
-            model_name="sentence-transformers/all-MiniLM-L6-v2",
-            model_kwargs={'device': 'cpu'},
-            encode_kwargs={'normalize_embeddings': True}
-        )
-        print("✓ Embedding model loaded")
+        embeddings_backend = os.getenv("EMBEDDINGS_BACKEND", "hf")
+        if embeddings_backend == "fake":
+            self.embeddings = FakeEmbeddings(size=384)
+            print("✓ Using fake embeddings (hosted demo)")
+        else:
+            try:
+                # Using sentence-transformers (runs locally, free, fast)
+                print("Loading embedding model (first time downloads ~400MB)...")
+                self.embeddings = HuggingFaceEmbeddings(
+                    model_name="sentence-transformers/all-MiniLM-L6-v2",
+                    model_kwargs={'device': 'cpu'},
+                    encode_kwargs={'normalize_embeddings': True}
+                )
+                print("✓ Embedding model loaded")
+            except Exception as e:
+                print(f"Embedding model unavailable: {e}")
+                print("Falling back to fake embeddings. Set EMBEDDINGS_BACKEND=fake to silence this.")
+                self.embeddings = FakeEmbeddings(size=384)
         
         # Initialize vector store
         self.vectorstore = None

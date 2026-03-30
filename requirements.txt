@@ -7,6 +7,6 @@ langchain
 langchain-community
 langchain-openai
 langchain-text-splitters
+pypdf
 chromadb
-sentence-transformers
 pypdf
