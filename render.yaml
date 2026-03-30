@@ -6,6 +6,11 @@ services:
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn rag_api:app --host 0.0.0.0 --port $PORT
     autoDeploy: true
+    envVars:
+      - key: LLM_TYPE
+        value: mock
+      - key: RAG_LAZY_INIT
+        value: "1"
 
   - type: web
     name: rag-ui

@@ -4,16 +4,24 @@ from typing import List, Optional
 from rag_with_llm import RAGWithLLM
 import time
 from pathlib import Path
+import os
 
 app = FastAPI(title="RAG API", description="Retrieval-Augmented Generation API")
 
 DOCUMENTS_DIR = Path("documents")
 DOCUMENTS_DIR.mkdir(exist_ok=True)
 
-# Initialize RAG system
-print("Loading RAG system...")
-rag = RAGWithLLM(llm_type="mock")  # Change to ollama/openai as needed
-print("✓ RAG system ready")
+rag = None
+
+def get_rag():
+    global rag
+    if rag is None:
+        llm_type = os.getenv("LLM_TYPE", "mock")
+        lazy_init = os.getenv("RAG_LAZY_INIT", "1") == "1"
+        print("Loading RAG system...")
+        rag = RAGWithLLM(llm_type=llm_type, load_vectorstore_on_init=not lazy_init)
+        print("✓ RAG system ready")
+    return rag
 
 # Request/Response models
 class Question(BaseModel):
@@ -54,9 +62,10 @@ async def ask(question: Question):
     start_time = time.time()
     
     try:
-        if not rag.rag.vectorstore:
+        rag_instance = get_rag()
+        if not rag_instance.rag.vectorstore:
             raise HTTPException(status_code=400, detail="Vector store not initialized. Run rag_core.py or ingest documents first.")
-        result = rag.ask(question.query, k=question.k)
+        result = rag_instance.ask(question.query, k=question.k)
         
         response_time = (time.time() - start_time) * 1000
         
@@ -84,7 +93,8 @@ async def ask(question: Question):
 
 @app.get("/health")
 async def health():
-    return {"status": "healthy", "llm_type": rag.llm_type}
+    llm_type = os.getenv("LLM_TYPE", "mock")
+    return {"status": "healthy", "llm_type": llm_type}
 
 @app.get("/sources")
 async def list_sources():

@@ -5,7 +5,7 @@ import os
 class RAGWithLLM:
     """RAG system with multiple LLM backends."""
     
-    def __init__(self, llm_type: str = "ollama", ollama_model: str | None = None):
+    def __init__(self, llm_type: str = "ollama", ollama_model: str | None = None, load_vectorstore_on_init: bool = True):
         """
         llm_type options:
         - "ollama": Run locally (free, private, need Ollama installed)
@@ -15,11 +15,13 @@ class RAGWithLLM:
         self.rag = LocalRAG()
         self.llm_type = llm_type
         self.ollama_model = ollama_model or os.getenv("OLLAMA_MODEL", "llama2")
+        self.load_vectorstore_on_init = load_vectorstore_on_init
         
-        # Load or create vector store
-        if not self.rag.load_vectorstore():
-            print("No existing vector store found. Please run rag_core.py first.")
-            raise ValueError("Vector store not initialized")
+        # Load vector store (optional during init)
+        if self.load_vectorstore_on_init:
+            if not self.rag.load_vectorstore():
+                print("No existing vector store found. Please run rag_core.py first.")
+                raise ValueError("Vector store not initialized")
         
         # Initialize LLM
         self.llm = self._init_llm()
@@ -53,6 +55,10 @@ class RAGWithLLM:
     
     def ask(self, question: str, k: int = 3) -> Dict:
         """Ask a question and get answer with citations."""
+
+        if not self.rag.vectorstore:
+            if not self.rag.load_vectorstore():
+                raise ValueError("Vector store not initialized. Run rag_core.py or ingest documents first.")
         
         # 1. Retrieve relevant documents
         results = self.rag.search(question, k=k)
