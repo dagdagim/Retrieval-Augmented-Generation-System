@@ -1,0 +1,4 @@
+
+Artificial Intelligence (AI) is the simulation of human intelligence in machines. 
+Key subfields include machine learning, deep learning, natural language processing, 
+and computer vision. Modern AI systems use neural networks with millions of parameters.

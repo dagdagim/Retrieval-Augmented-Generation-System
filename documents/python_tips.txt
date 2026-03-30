@@ -1,0 +1,4 @@
+
+Python is great for AI development. Key libraries include NumPy for numerical computing,
+PyTorch and TensorFlow for deep learning, and LangChain for building RAG applications.
+Virtual environments help manage dependencies across projects.

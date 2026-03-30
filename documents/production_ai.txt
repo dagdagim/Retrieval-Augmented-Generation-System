@@ -1,0 +1,4 @@
+
+Deploying AI to production requires: model versioning, A/B testing, monitoring drift,
+and scaling infrastructure. Tools like Docker, Kubernetes, and MLflow are essential.
+Always include logging and alerting for production systems.
